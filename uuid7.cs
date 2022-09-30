@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
+using System.Security.Cryptography;
 
 namespace UuidExtensions
 {
@@ -21,8 +23,6 @@ namespace UuidExtensions
             return 100 * (DateTime.UtcNow.Ticks - DateTime.UnixEpoch.Ticks);
         }
 
-        private static readonly Random _rand = new Random();
-
         // Time values and sequence counter from the last call
         private static long _x = 0;
         private static long _y = 0;
@@ -36,6 +36,7 @@ namespace UuidExtensions
         private static long _z_asOf = 0;
         private static int _seq_asOf = 0;
 
+
         /// <summary>
         /// A new UUIDv7 Guid, which is time-ordered, with a nominal
         /// time resolution of 100ns and 32 bits of randomness.
@@ -43,8 +44,10 @@ namespace UuidExtensions
         /// The special value of 0 gives an all zero uuid.
         /// </summary>
         /// <param name="asOfNs">Optional time to use, in integer nanoseconds since the Unix epoch.</param>
-        /// <returns></returns>
-        public static Guid New(long? asOfNs = null)
+        /// <returns>
+        /// Guid that follows UUID v7 format whose string and integer representations are time-sortable.
+        /// </returns>
+        public Guid Guid(long? asOfNs = null)
         {
             /* The time resolution stored here is 24 fractional bits,
              * corresponding to 50ns. This is sufficient for the underlying
@@ -77,6 +80,7 @@ namespace UuidExtensions
             if (asOfNs == null)
                 ns = TimeNs();
             else if (asOfNs == 0)
+                // No randomness. In case one is needed for "earlier than everything else"
                 return new Guid("00000000-0000-0000-0000-000000000000");
             else
                 ns = (long)asOfNs;
@@ -127,8 +131,10 @@ namespace UuidExtensions
                 seq = _seq_asOf;
             }
 
+            // Last 8 bytes of uuid have variant and sequence in first two bytes,
+            // then six bytes of randomness.
             var last8Bytes = new byte[8];
-            _rand.NextBytes(last8Bytes);
+            RandomNumberGenerator.Fill(last8Bytes);
             last8Bytes[0] = (byte)(uuidVariant << 6 | seq >> 8);
             last8Bytes[1] = (byte)(seq & 0xFF);
 
@@ -144,14 +150,46 @@ namespace UuidExtensions
             );
         }
 
-        public static string NewString(long? asOfNs = null)
+        /// <summary>
+        /// A UUIDv7 Guid transformed into a 25-character lower-case string which 
+        /// preserves the time-ordered property. Using this distinct representation can
+        /// reduce the chance that some v4 UUIDs end up in a collection of v7 UUIDs.
+        /// 
+        /// As for the Uuid7.Guid(), the current time is used, unless overridden.
+        /// The special value of 0 gives an all zero uuid.
+        /// </summary>
+        /// <param name="asOfNs">Optional time to use, in integer nanoseconds since the Unix epoch.</param>
+        /// <returns>
+        /// 25-character string like "0q974fmmvghw8qfathid7qekc" that is time-sortable.
+        /// </returns>
+        public string Id25(long? asOfNs = null)
         {
-            return New(asOfNs).ToString();
+            const string alphabet = "0123456789abcdefghijkmnopqrstuvwxyz"; // 35 chars - no "l"
+            char[] id25_chars = new char[25];
+
+            Guid guid = this.Guid(asOfNs);
+            byte[] uuid7_bytes = guid.ToByteArray();
+            BigInteger rest = new BigInteger(uuid7_bytes);
+            BigInteger rem;
+            BigInteger divisor = 35;
+
+            for (var pos = 24; pos >= 0; pos--)
+            {
+                rem = rest % divisor;
+                rest /= divisor;
+                id25_chars[pos] = alphabet[(int)rem];
+            }
+            return new string(id25_chars);
+        }
+
+        public string String(long? asOfNs = null)
+        {
+            return this.Guid(asOfNs).ToString();
         }
 
         /// <summary>
-        /// Check whether the tick values are being returning
-        /// with ~100ns precision. Should not see 15ms!
+        /// Check whether the tick values on this system are being returned
+        /// with ~100ns precision. We should not see 15ms!
         /// Typical values on Win11 seem to be 132ns.
         /// </summary>
         /// <returns>String with description of timing analysis.</returns>
@@ -171,7 +209,7 @@ namespace UuidExtensions
             var actualPrecisionNs = 1_000_000 * sw.Elapsed.TotalMilliseconds / numSamples;
             var maxPrecisionNs = 1_000_000 * sw.Elapsed.TotalMilliseconds / numLoops;
 
-            return $"Precision is {actualPrecisionNs:0}ns rather than {maxPrecisionNs:0}ns ({numSamples:N0} samples in {sw.Elapsed.TotalSeconds:3}s)";
+            return $"Precision is {actualPrecisionNs:0}ns rather than {maxPrecisionNs:0}ns ({numSamples:N0} samples in {sw.Elapsed.TotalMilliseconds}ms)";
         }
     }
 }
