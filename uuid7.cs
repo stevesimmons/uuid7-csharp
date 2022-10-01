@@ -35,7 +35,12 @@ namespace UuidExtensions
         private static long _y_asOf = 0;
         private static long _z_asOf = 0;
         private static int _seq_asOf = 0;
+        //private long? asOfNs;
 
+        //public Uuid7(long? asOfNs = null)
+        //{
+        //    this.asOfNs = asOfNs;
+        //}
 
         /// <summary>
         /// A new UUIDv7 Guid, which is time-ordered, with a nominal
@@ -168,8 +173,27 @@ namespace UuidExtensions
             char[] id25_chars = new char[25];
 
             Guid guid = this.Guid(asOfNs);
-            byte[] uuid7_bytes = guid.ToByteArray();
-            BigInteger rest = new BigInteger(uuid7_bytes);
+            
+            byte[] arr = guid.ToByteArray();
+            // C# GUIDs use a mix of big endian and little ending ordering.
+            // e.g. Guid  00010203-0405-0607-0809-0A0B0C0D0E0F becomes
+            // byte array 030201000504070608090A0B0C0D0E0F.
+            // So do endian conversion for first 8 bytes as long-short-short.
+            byte b;
+            b = arr[3];
+            arr[3] = arr[0];
+            arr[0] = b;
+            b = arr[2];
+            arr[2] = arr[1];
+            arr[1] = b;
+            b = arr[4];
+            arr[4] = arr[5];
+            arr[5] = b;
+            b = arr[6];
+            arr[6] = arr[7];
+            arr[7] = b;
+
+            BigInteger rest = new BigInteger(arr, true, true);
             BigInteger rem;
             BigInteger divisor = 35;
 
@@ -177,7 +201,9 @@ namespace UuidExtensions
             {
                 rem = rest % divisor;
                 rest /= divisor;
-                id25_chars[pos] = alphabet[(int)rem];
+                BigInteger new_rest = rest / divisor;
+                char c = alphabet[(int)rem];
+                id25_chars[pos] = c;
             }
             return new string(id25_chars);
         }
@@ -198,7 +224,7 @@ namespace UuidExtensions
             var distinctValues = new HashSet<long>();
             var sw = Stopwatch.StartNew();
             long numLoops = 0;
-            while (sw.Elapsed.TotalSeconds < 0.5 && distinctValues.Count < 1000)
+            while (sw.Elapsed.TotalSeconds < 0.5 && numLoops < 1000)
             {
                 distinctValues.Add(TimeNs());
                 numLoops += 1;
@@ -209,7 +235,10 @@ namespace UuidExtensions
             var actualPrecisionNs = 1_000_000 * sw.Elapsed.TotalMilliseconds / numSamples;
             var maxPrecisionNs = 1_000_000 * sw.Elapsed.TotalMilliseconds / numLoops;
 
-            return $"Precision is {actualPrecisionNs:0}ns rather than {maxPrecisionNs:0}ns ({numSamples:N0} samples in {sw.Elapsed.TotalMilliseconds}ms)";
+            if (numSamples == numLoops)
+                return $"Precision is {actualPrecisionNs:0}ns with no repeats in {numLoops:N0} loops taking {sw.Elapsed.TotalMilliseconds}ms";
+            else
+                return $"Precision is {actualPrecisionNs:0}ns rather than {maxPrecisionNs:0}ns ({numSamples:N0} unique timestamps from {numLoops:N0} loops taking {sw.Elapsed.TotalMilliseconds}ms)";
         }
     }
 }
