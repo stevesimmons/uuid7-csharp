@@ -5,6 +5,8 @@ This C# project implements UUID v7 as described in
 This is the latest IETF draft for UUIDs that are time-sortable
 and have a random component to guarantee uniqueness.
 
+It is available on NuGet as `UuidExtensions`.
+
 The internal structure of the UUID uses:
 
 * 36 bits to represent the number of whole seconds since 1 January 1970.
