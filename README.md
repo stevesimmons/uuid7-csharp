@@ -84,7 +84,8 @@ Assert.IsTrue(String.Compare(s1, s2) < 0);
 The timestamp may be specified explicitly by passing in the time
 expressed as the whole number of nanoseconds since 00:00:00 on 1 January 1970 UTC.
 Here are two Id25 strings nominally 1ns apart, and a third at the
-same timestamp as the second:
+same timestamp as the second. 
+
 
 ```csharp
 var uuid7 = new Uuid7();
@@ -95,4 +96,18 @@ string s2 = uuid7.Id25(t2); //      0q996kioxxyfj83w8bqp67d2j
 string s3 = uuid7.Id25(t2); //      0q996kioxxyfj83z4pmujhrx4
 Assert.IsTrue(String.Compare(s1, s2) < 0);
 Assert.IsTrue(String.Compare(s2, s3) < 0);
+```
+
+Note that the second and the third have been generated from the same 
+`Uuid7` object. Its internal sequence counter ensures successive 
+UUIDv7/Id25 values remain time-ordered even if they have the 
+same timestamp. 
+
+The sequence counter resets when the timestamp changes.
+So here we cannot tell whether `s1 > s3` or not.
+
+```csharp
+string s1 = uuid7.Id25(t1);
+string s2 = uuid7.Id25(t2);
+string s3 = uuid7.Id25(t1);
 ```
