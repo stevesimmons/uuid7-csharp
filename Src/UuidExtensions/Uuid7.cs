@@ -46,13 +46,16 @@ namespace UuidExtensions
         /// A new UUIDv7 Guid, which is time-ordered, with a nominal
         /// time resolution of 100ns and 32 bits of randomness.
         /// The current time is used, unless overridden.
+        /// Consecutive calls using the same Uuid7 instance employ a 14-bit sequence
+        /// counter so their uuids/Id25s stay time-ordered. The lowest 48 bits are random.
+        /// 
         /// The special value of 0 gives an all zero uuid.
         /// </summary>
         /// <param name="asOfNs">Optional time to use, in integer nanoseconds since the Unix epoch.</param>
         /// <returns>
         /// Guid that follows UUID v7 format whose string and integer representations are time-sortable.
         /// </returns>
-        public Guid Guid(long? asOfNs = null)
+        public static Guid Guid(long? asOfNs = null)
         {
             /* The time resolution stored here is 24 fractional bits,
              * corresponding to 50ns. This is sufficient for the underlying
@@ -154,6 +157,32 @@ namespace UuidExtensions
                 last8Bytes
             );
         }
+        public static string String(long? asOfNs = null)
+        {
+            return Guid(asOfNs).ToString();
+        }
+
+        /// <summary>
+        /// A UUIDv7 Guid transformed into a 25-character lower-case string which 
+        /// preserves the time-ordered property. This representation, called Id25,
+        /// is distinctive and reduces the chance that some v4 UUIDs end up 
+        /// in a collection meant to contain only v7 UUIDs.
+        /// 
+        /// As for the Uuid7.Guid(), the current time is used, unless overridden.
+        /// Consecutive calls using the same Uuid7 instance employ a 14-bit sequence
+        /// counter so their uuids/Id25s stay time-ordered. The lowest 48 bits are random.
+        /// 
+        /// The special value of 0 gives an all zero uuid.
+        /// </summary>
+        /// <param name="asOfNs">Optional time to use, in integer nanoseconds since the Unix epoch.</param>
+        /// <returns>
+        /// 25-character string like "0q974fmmvghw8qfathid7qekc" that is time-sortable.
+        /// </returns>
+        public static string Id25(long? asOfNs = null)
+        {
+            Guid guid = Guid(asOfNs);
+            return Id25(guid);
+        }
 
         /// <summary>
         /// A UUIDv7 Guid transformed into a 25-character lower-case string which 
@@ -167,12 +196,10 @@ namespace UuidExtensions
         /// <returns>
         /// 25-character string like "0q974fmmvghw8qfathid7qekc" that is time-sortable.
         /// </returns>
-        public string Id25(long? asOfNs = null)
+        public static string Id25(Guid guid)
         {
             const string alphabet = "0123456789abcdefghijkmnopqrstuvwxyz"; // 35 chars - no "l"
             char[] id25_chars = new char[25];
-
-            Guid guid = this.Guid(asOfNs);
             
             byte[] arr = guid.ToByteArray();
             // C# GUIDs use a mix of big endian and little ending ordering.
@@ -193,7 +220,14 @@ namespace UuidExtensions
             arr[6] = arr[7];
             arr[7] = b;
 
-            BigInteger rest = new BigInteger(arr, true, true);
+            var isZero = arr.All(b => b == 0);
+            int uuidVersion = arr[6] >> 4;
+            int uuidVariant = arr[8] >> 6;
+            if ((!isZero) && (uuidVersion != 7 || uuidVariant != 2)) {
+                 throw new ArgumentException("Not v7 UUID");
+            }
+
+            var rest = new BigInteger(arr, true, true);
             BigInteger rem;
             BigInteger divisor = 35;
 
@@ -201,17 +235,12 @@ namespace UuidExtensions
             {
                 rem = rest % divisor;
                 rest /= divisor;
-                BigInteger new_rest = rest / divisor;
                 char c = alphabet[(int)rem];
                 id25_chars[pos] = c;
             }
             return new string(id25_chars);
         }
 
-        public string String(long? asOfNs = null)
-        {
-            return this.Guid(asOfNs).ToString();
-        }
 
         /// <summary>
         /// Check whether the tick values on this system are being returned

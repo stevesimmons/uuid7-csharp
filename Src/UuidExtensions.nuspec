@@ -7,10 +7,9 @@
     <authors>Stephen Simmons</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <!-- <icon>icon.png</icon> -->
     <projectUrl>https://github.com/stevesimmons/uuid7-csharp/</projectUrl>
-    <description>C# implementation of UUID v7 time-sortable Guids, and an alternative string format Id25, like "0q974fmmvghw8qfathid7qekc".</description>
-    <releaseNotes>Make threadsafe. Add Id25 representation (like "0q974fmmvghw8qfathid7qekc"). Add unit tests.</releaseNotes>
+    <description>C# implementation of UUID v7 time-sortable Guids ("06338364-8305-788f-8000-9ada942eb663"), and an alternative string format Id25 ("0q974fmmvghw8qfathid7qekc").</description>
+    <releaseNotes>Add console app. Extend unit tests.</releaseNotes>
     <copyright>$copyright$</copyright>
     <tags>UUID</tags>
   </metadata>

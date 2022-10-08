@@ -115,3 +115,14 @@ string s1 = uuid7.Id25(t1);
 string s2 = uuid7.Id25(t2);
 string s3 = uuid7.Id25(t1);
 ```
+
+## Sample console application
+
+A simple console app prints out the current timestamp's Uuid7 in both UUID and Id25 forms.
+It also does a simple timing check to calculate the underlying clock precision.
+
+```powershell
+> dotnet run
+0634194d-3e69-72a4-8000-d602a09b0e94 0q9khv3tqz7e3jfv1v0i42yz0
+Precision is 2852ns rather than 1863ns (653 unique timestamps from 1,000 loops taking 1.8626ms)
+```

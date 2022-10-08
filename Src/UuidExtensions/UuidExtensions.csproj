@@ -6,10 +6,10 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>stevesimmons</Authors>
-	<Version>1.1.0</Version>
+	<Version>1.2.0</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/stevesimmons/uuid7-csharp</PackageProjectUrl>
-    <Description>C# implementation of UUID v7 time-sortable Guids, and an alternative string format Id25, like "0q974fmmvghw8qfathid7qekc".</Description>
+    <Description>C# implementation of UUID v7 time-sortable Guids ("06338364-8305-788f-8000-9ada942eb663"), and an alternative string format Id25 ("0q974fmmvghw8qfathid7qekc").</Description>
     <RepositoryUrl>https://github.com/stevesimmons/uuid7-csharp.git</RepositoryUrl>
     <PackageTags>UUID</PackageTags>
   </PropertyGroup>
