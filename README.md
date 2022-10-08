@@ -10,22 +10,25 @@ It is available on NuGet as `UuidExtensions`.
 The internal structure of the UUID uses:
 
 * 36 bits to represent the number of whole seconds since 1 January 1970.
-* 24 bits to represent the fractional number of seconds, giving a resolution of 50ns.
+* 24 bits to represent the fractional number of seconds, 
+  giving a resolution of up to 50ns.
 * 14 bits for a sequence number, in case of multiple uuids being generated 
   with the same timestamp instant.
-    * Needed in cases when the machine's physical clock tick resolution is a lot worse than 
-      the 50ns storage resolution.
-    * Also needed when generating multiple uuids as of a fixed timestamp in the past.
+    * Needed in cases when the machine's physical clock tick
+      resolution is a lot worse than the 50ns storage resolution.
+    * Also needed when generating multiple uuids as of a fixed timestamp
+      in the past.
 * 48 bits of randomness.
-* 6 "variant" bits to indicate this is a UUID v7 rather than v4 or one of the other UUID formats.
+* 6 "version" and "variant" bits to indicate this is a UUID v7
+  rather than v4 or one of the other UUID formats.
 
 ```text
 0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                            unixts                             |
+|                 unix ts (32 + 4 = 36 bits)                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|unixts |   msec (12 bits)      |  ver  |     usec (12 bits)    |
+|unix ts|   msec (12 bits)      |  ver  |     usec (12 bits)    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |var|       seq (14 bits)       |          rand (16 bits)       |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -104,7 +107,8 @@ UUIDv7/Id25 values remain time-ordered even if they have the
 same timestamp. 
 
 The sequence counter resets when the timestamp changes.
-So here we cannot tell whether `s1 > s3` or not.
+In this final example, we cannot tell whether `s1 > s3` or not.
+That is determined by the lower 36 random bits of the two UUIDs.
 
 ```csharp
 string s1 = uuid7.Id25(t1);
