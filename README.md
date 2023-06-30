@@ -1,6 +1,6 @@
-# UUID v7
+# UUID v7 (for .NET Standard 2.0)
 
-This C# project implements UUID v7 as described in 
+This C# project implements UUID v7 as described in
 [Peabody and Davis](https://datatracker.ietf.org/doc/html/draft-peabody-dispatch-new-uuid-format).
 This is the latest IETF draft for UUIDs that are time-sortable
 and have a random component to guarantee uniqueness.
@@ -35,7 +35,6 @@ The internal structure of the UUID uses:
 |                          rand (32 bits)                       |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
 ```
-
 
 ## UUID v7 in Guid and String formats
 
