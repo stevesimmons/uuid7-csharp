@@ -213,7 +213,6 @@ namespace UuidExtensions
         /// of 0 gives an all zero uuid.
         /// </para>
         /// </summary>
-        /// <param name="asOfNs">Optional time to use, in integer nanoseconds since the Unix epoch.</param>
         /// <returns>25-character string like "0q974fmmvghw8qfathid7qekc" that is time-sortable.</returns>
         public static string Id25(Guid guid)
         {
@@ -269,9 +268,75 @@ namespace UuidExtensions
                 rem = rest % divisor;
                 rest /= divisor;
                 char c = alphabet[(int)rem];
+
                 id25_chars[pos] = c;
             }
             return new string(id25_chars);
+        }
+
+        public static string Id26(Guid guid)
+        {
+            if (guid == System.Guid.Empty)
+            {
+                throw new ArgumentNullException(nameof(guid));
+            }
+
+            const string alphabet = "0123456789abcdefghjkmnpqrstvwxyz"; // 32 chars - no "i", "l", "o", "u"
+            char[] id26_chars = new char[26];
+
+            byte[] arr = guid.ToByteArray();
+            // C# GUIDs use a mix of big endian and little ending ordering. e.g. Guid
+            // 00010203-0405-0607-0809-0A0B0C0D0E0F becomes byte array
+            // 030201000504070608090A0B0C0D0E0F. So do endian conversion for first 8 bytes as long-short-short.
+            byte b = arr[3];
+            arr[3] = arr[0];
+            arr[0] = b;
+            b = arr[2];
+            arr[2] = arr[1];
+            arr[1] = b;
+            b = arr[4];
+            arr[4] = arr[5];
+            arr[5] = b;
+            b = arr[6];
+            arr[6] = arr[7];
+            arr[7] = b;
+
+            bool isZero = true;
+            foreach (byte b1 in arr)
+            {
+                if (b1 != 0)
+                {
+                    isZero = false;
+                    break;
+                }
+            }
+
+            int uuidVersion = arr[6] >> 4;
+            int uuidVariant = arr[8] >> 6;
+            if ((!isZero) && (uuidVersion != 7 || uuidVariant != 2))
+            {
+                throw new ArgumentException("Not v7 UUID");
+            }
+
+            BigInteger rest = 0;
+            for (var i = 0; i < 16; i++)
+            {
+                rest <<= 8;
+                rest |= arr[i];
+            }
+
+            BigInteger rem;
+            BigInteger divisor = 32;
+
+            for (var pos = 25; pos >= 0; pos--)
+            {
+                rem = rest % divisor;
+                rest /= divisor;
+                char c = alphabet[(int)rem];
+                id26_chars[pos] = c;
+            }
+
+            return new string(id26_chars);
         }
 
         public static string String(long? asOfNs = null)
